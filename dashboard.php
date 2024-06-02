@@ -24,7 +24,7 @@ if (isset($_POST['finalize_repair'])) {
         $total_cost += $repair['cost'];
     }
 
-    echo "<script>alert('최종 저장되었습니다.'); window.location.href = 'dashboard.php';</script>";
+    echo "<script>alert('최종 저장되었습니다.'); window.location.href = 'dashboard.php?car_number=" . urlencode($car_number) . "';</script>";
     exit();
 }
 
@@ -70,8 +70,7 @@ function formatCurrency($amount) {
                 const confirmMessage = `${repairs.map(repair => `${repair.cost.toLocaleString()}원`).join('과 ')}이 추가된 ${totalCost.toLocaleString()}원이 총 금액 맞습니까?`;
 
                 if (confirm(confirmMessage)) {
-                    $.post("dashboard.php", {
-                        finalize_repair: true,
+                    $.post("save_repair.php", {
                         car_number: $("#car_number").val(),
                         repairs: JSON.stringify(repairs)
                     }, function(response) {
@@ -230,14 +229,14 @@ function formatCurrency($amount) {
     <main>
         <div class="dashboard-container">
             <h2>차계부 대시보드</h2>
-            <form action="dashboard.php" method="POST">
+            <form action="dashboard.php" method="GET">
                 <label for="car_number">차번호 입력:</label>
                 <input type="text" id="car_number" name="car_number" required>
                 <button type="submit" class="submit-btn">조회</button>
             </form>
             
             <?php
-            $car_number = $_POST['car_number'] ?? $_GET['car_number'] ?? null;
+            $car_number = $_GET['car_number'] ?? null;
             if ($car_number) {
                 // 차량 정보 조회
                 $stmt = $conn->prepare("SELECT * FROM car_info WHERE car_number = ?");

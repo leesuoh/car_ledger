@@ -128,6 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
         <div class="link">
             <p>계정이 없으신가요? <a href="register.php">회원가입</a></p>
+            <p><a href="find_username.php">아이디 찾기</a> | <a href="reset_password.php">비밀번호 찾기</a></p>
         </div>
     </div>
 </body>
