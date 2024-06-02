@@ -1,0 +1,139 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 0;
+}
+
+.container {
+  width: 80%;
+  margin: auto;
+  overflow: hidden;
+}
+
+.logo {
+  float: left;
+  width: 195px; /* 30% 증가된 크기 */
+}
+
+.navigation {
+  float: right;
+}
+
+.navigation .menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navigation .menu .menu__item {
+  display: inline;
+  margin-left: 15px;
+}
+
+.navigation .menu .menu__link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.3em; /* 30% 증가된 크기 */
+}
+
+main {
+  padding: 20px 0;
+}
+
+.dashboard-container, .mypage-container {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 20px auto;
+  max-width: 800px;
+  text-align: center;
+}
+
+.dashboard-container h2, .mypage-container h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.dashboard-container form, .mypage-container form {
+  margin-bottom: 20px;
+}
+
+.dashboard-container label, .mypage-container label {
+  font-weight: bold;
+}
+
+.dashboard-container input, .mypage-container input {
+  padding: 8px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: calc(100% - 20px);
+}
+
+.dashboard-container .submit-btn, .mypage-container .submit-btn {
+  padding: 10px 20px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.dashboard-container .submit-btn:hover, .mypage-container .submit-btn:hover {
+  background-color: #0056b3;
+}
+
+.success {
+  color: green;
+  margin-top: 10px;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+/* 시작하기 버튼 스타일 */
+.start-btn {
+  display: inline-block;
+  padding: 20px 40px; /* 더 큰 패딩 */
+  font-size: 1.5em;
+  color: #000; /* 검정색 텍스트 */
+  background-color: #fff; /* 흰색 배경 */
+  text-decoration: none;
+  border: 2px solid #000; /* 검정색 테두리 */
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+  text-align: center;
+}
+
+.start-btn:hover {
+  background-color: #000;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* 애니메이션 클래스 */
+.car-animation {
+  width: 100%;
+  height: auto;
+}
+
+.animate-car {
+  animation: moveCar 5s infinite;
+}
+
+@keyframes moveCar {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(20px); }
+  100% { transform: translateX(0); }
+}
