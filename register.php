@@ -1,4 +1,4 @@
-    <?php
+<?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -10,7 +10,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
 
     if (empty($username) || empty($password) || empty($email)) {
-        echo "모든 필드를 입력해주세요.";
+        echo "<script>alert('모든 필드를 입력해주세요.');</script>";
+        exit();
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('잘못된 이메일 형식입니다.');</script>";
         exit();
     }
 
@@ -23,17 +28,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $error = "이미 사용 중인 사용자명입니다.";
+        echo "<script>alert('이미 사용 중인 사용자명입니다.');</script>";
     } else {
         // 이메일을 포함하여 데이터를 저장
         $stmt = $conn->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
         $stmt->bind_param("sss", $username, $hashed_password, $email);
 
         if ($stmt->execute()) {
-            header("Location: login.php");
+            echo "<script>
+                    alert('회원가입이 완료되었습니다.');
+                    window.location.href = 'index.php';
+                  </script>";
             exit();
         } else {
-            $error = "회원가입에 실패했습니다. 다시 시도해주세요.";
+            echo "<script>alert('회원가입에 실패했습니다. 다시 시도해주세요.');</script>";
         }
     }
     $stmt->close();
@@ -128,6 +136,19 @@ $conn->close();
             color: #0056b3;
         }
     </style>
+    <script>
+        function validateForm() {
+            var email = document.getElementById('email').value;
+            var emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+            if (!emailPattern.test(email)) {
+                alert('잘못된 이메일 형식입니다.');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </head>
 <body>
     <div class="form-container">
@@ -135,7 +156,7 @@ $conn->close();
         <?php if (isset($error)): ?>
             <p class="error"><?= htmlspecialchars($error) ?></p>
         <?php endif; ?>
-        <form action="register.php" method="post">
+        <form action="register.php" method="post" onsubmit="return validateForm()">
             <label for="username">사용자명:</label>
             <input type="text" id="username" name="username" required><br><br>
             <label for="password">비밀번호:</label>

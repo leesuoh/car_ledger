@@ -14,7 +14,11 @@ $stmt = $conn->prepare("SELECT * FROM car_info WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
-$car_info = $result->fetch_assoc();
+$car_info = [];
+while ($row = $result->fetch_assoc()) {
+    $car_info[] = $row;
+}
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -153,6 +157,14 @@ $car_info = $result->fetch_assoc();
             background-color: #333;
         }
 
+        .car-info {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background: #fff;
+        }
+
         .success {
             color: green;
             margin-top: 10px;
@@ -193,10 +205,14 @@ $car_info = $result->fetch_assoc();
             <!-- 내 차량 정보 표시 -->
             <div id="carInfo" class="profile-section">
                 <h3>내 차량 정보</h3>
-                <?php if ($car_info): ?>
-                    <p>차량 번호: <?= htmlspecialchars($car_info['car_number']) ?></p>
-                    <p>차종: <?= htmlspecialchars($car_info['car_model']) ?></p>
-                    <p>주행거리: <?= htmlspecialchars($car_info['mileage']) ?> km</p>
+                <?php if (count($car_info) > 0): ?>
+                    <?php foreach ($car_info as $car): ?>
+                        <div class="car-info">
+                            <p><strong>차량 번호:</strong> <?= htmlspecialchars($car['car_number']) ?></p>
+                            <p><strong>차종:</strong> <?= htmlspecialchars($car['car_model']) ?></p>
+                            <p><strong>주행거리:</strong> <?= htmlspecialchars($car['mileage']) ?> km</p>
+                        </div>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <p>차량 정보가 없습니다.</p>
                 <?php endif; ?>
@@ -206,6 +222,7 @@ $car_info = $result->fetch_assoc();
             <div id="registerCar" class="profile-section">
                 <h3>신규 차량 등록</h3>
                 <form action="update_user_info.php" method="POST">
+                    <input type="hidden" name="username" value="<?= htmlspecialchars($username) ?>">
                     <label for="new_car_number">차량 번호:</label>
                     <input type="text" id="new_car_number" name="new_car_number" required>
                     <label for="car_model">차종:</label>
@@ -213,33 +230,36 @@ $car_info = $result->fetch_assoc();
                     <label for="mileage">주행거리:</label>
                     <input type="number" id="mileage" name="mileage" required>
                     <button type="submit" name="register_car">등록</button>
-                    <?php if (isset($car_register_success)): ?>
-                        <p class="success">차량이 성공적으로 등록되었습니다.</p>
-                    <?php endif; ?>
                 </form>
             </div>
 
             <!-- 차량 정보 수정 폼 -->
             <div id="updateCar" class="profile-section">
                 <h3>차량 정보 수정</h3>
-                <form action="update_user_info.php" method="POST">
-                    <label for="existing_car_number">기존 차량 번호:</label>
-                    <input type="text" id="existing_car_number" name="existing_car_number" required>
-                    <label for="new_car_number">새 차량 번호:</label>
-                    <input type="text" id="new_car_number" name="new_car_number" required>
-                    <label for="new_car_model">새 차종:</label>
-                    <input type="text" id="new_car_model" name="new_car_model" required>
-                    <button type="submit" name="update_car_info">수정</button>
-                    <?php if (isset($car_update_success)): ?>
-                        <p class="success">차량 정보가 성공적으로 수정되었습니다.</p>
-                    <?php endif; ?>
-                </form>
+                <?php if (count($car_info) > 0): ?>
+                    <?php foreach ($car_info as $car): ?>
+                        <div class="car-info">
+                            <p><strong>기존 차량 번호:</strong> <?= htmlspecialchars($car['car_number']) ?></p>
+                            <form action="update_user_info.php" method="POST">
+                                <input type="hidden" name="existing_car_number" value="<?= htmlspecialchars($car['car_number']) ?>">
+                                <label for="new_car_number">새 차량 번호:</label>
+                                <input type="text" id="new_car_number" name="new_car_number" required>
+                                <label for="new_car_model">새 차종:</label>
+                                <input type="text" id="new_car_model" name="new_car_model" required>
+                                <button type="submit" name="update_car_info">수정</button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>차량 정보가 없습니다.</p>
+                <?php endif; ?>
             </div>
 
             <!-- 회원 정보 수정 폼 -->
             <div id="updateUser" class="profile-section">
                 <h3>회원 정보 수정</h3>
                 <form action="update_user_info.php" method="POST">
+                    <input type="hidden" name="current_username" value="<?= htmlspecialchars($username) ?>">
                     <label for="new_username">새 사용자명:</label>
                     <input type="text" id="new_username" name="new_username" required>
                     <label for="new_email">새 이메일:</label>
@@ -247,9 +267,6 @@ $car_info = $result->fetch_assoc();
                     <label for="new_password">새 비밀번호:</label>
                     <input type="password" id="new_password" name="new_password" required>
                     <button type="submit" name="update_user_info">수정</button>
-                    <?php if (isset($user_update_success)): ?>
-                        <p class="success">회원 정보가 성공적으로 수정되었습니다.</p>
-                    <?php endif; ?>
                 </form>
             </div>
         </div>

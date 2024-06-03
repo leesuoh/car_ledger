@@ -3,9 +3,8 @@ session_start();
 include 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $car_number = $data['car_number'];
-    $repairs = json_decode($data['repairs'], true);
+    $car_number = $_POST['car_number'];
+    $repairs = json_decode($_POST['repairs'], true);
 
     foreach ($repairs as $repair) {
         $description = $repair['description'];
