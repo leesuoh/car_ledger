@@ -14,30 +14,24 @@ $stmt = $conn->prepare("SELECT * FROM car_info WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
-$car_info = $result->fetch_assoc();
+$car_info = [];
+while ($row = $result->fetch_assoc()) {
+    $car_info[] = $row;
+}
+$stmt->close();
+
+// 사용자의 이메일 정보 가져오기
+$stmt = $conn->prepare("SELECT email FROM users WHERE username = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$email_result = $stmt->get_result();
+$user_email = $email_result->fetch_assoc()['email'];
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    document.body.classList.add('fade-in');
-
-    // 페이지를 떠날 때 페이드 아웃 효과 적용
-    document.querySelectorAll('a').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            if (link.getAttribute('href') !== '#') {
-                e.preventDefault();
-                document.body.classList.add('fade-out');
-                setTimeout(function() {
-                    window.location.href = link.href;
-                }, 3000); // 애니메이션 지속 시간 (3초)에 맞춰 조정
-            }
-        });
-    });
-});
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>마이페이지</title>
@@ -171,6 +165,14 @@ document.addEventListener("DOMContentLoaded", function() {
             background-color: #333;
         }
 
+        .car-info {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background: #fff;
+        }
+
         .success {
             color: green;
             margin-top: 10px;
@@ -212,9 +214,13 @@ document.addEventListener("DOMContentLoaded", function() {
             <div id="carInfo" class="profile-section">
                 <h3>내 차량 정보</h3>
                 <?php if ($car_info): ?>
-                    <p>차량 번호: <?= htmlspecialchars($car_info['car_number']) ?></p>
-                    <p>차종: <?= htmlspecialchars($car_info['car_model']) ?></p>
-                    <p>주행거리: <?= htmlspecialchars($car_info['mileage']) ?> km</p>
+                    <?php foreach ($car_info as $car): ?>
+                        <div class="car-info">
+                            <p><strong>차량 번호:</strong> <?= htmlspecialchars($car['car_number']) ?></p>
+                            <p><strong>차종:</strong> <?= htmlspecialchars($car['car_model']) ?></p>
+                            <p><strong>주행거리:</strong> <?= htmlspecialchars($car['mileage']) ?> km</p>
+                        </div>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <p>차량 정보가 없습니다.</p>
                 <?php endif; ?>
@@ -224,6 +230,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <div id="registerCar" class="profile-section">
                 <h3>신규 차량 등록</h3>
                 <form action="update_user_info.php" method="POST">
+                    <input type="hidden" name="username" value="<?= htmlspecialchars($username) ?>">
                     <label for="new_car_number">차량 번호:</label>
                     <input type="text" id="new_car_number" name="new_car_number" required>
                     <label for="car_model">차종:</label>
@@ -231,43 +238,44 @@ document.addEventListener("DOMContentLoaded", function() {
                     <label for="mileage">주행거리:</label>
                     <input type="number" id="mileage" name="mileage" required>
                     <button type="submit" name="register_car">등록</button>
-                    <?php if (isset($car_register_success)): ?>
-                        <p class="success">차량이 성공적으로 등록되었습니다.</p>
-                    <?php endif; ?>
                 </form>
             </div>
 
             <!-- 차량 정보 수정 폼 -->
             <div id="updateCar" class="profile-section">
                 <h3>차량 정보 수정</h3>
-                <form action="update_user_info.php" method="POST">
-                    <label for="existing_car_number">기존 차량 번호:</label>
-                    <input type="text" id="existing_car_number" name="existing_car_number" required>
-                    <label for="new_car_number">새 차량 번호:</label>
-                    <input type="text" id="new_car_number" name="new_car_number" required>
-                    <label for="new_car_model">새 차종:</label>
-                    <input type="text" id="new_car_model" name="new_car_model" required>
-                    <button type="submit" name="update_car_info">수정</button>
-                    <?php if (isset($car_update_success)): ?>
-                        <p class="success">차량 정보가 성공적으로 수정되었습니다.</p>
-                    <?php endif; ?>
-                </form>
+                <?php if ($car_info): ?>
+                    <?php foreach ($car_info as $car): ?>
+                        <div class="car-info">
+                            <p><strong>기존 차량 번호:</strong> <?= htmlspecialchars($car['car_number']) ?></p>
+                            <form action="update_user_info.php" method="POST">
+                                <input type="hidden" name="existing_car_number" value="<?= htmlspecialchars($car['car_number']) ?>">
+                                <label for="new_car_number">새 차량 번호:</label>
+                                <input type="text" id="new_car_number" name="new_car_number" required>
+                                <label for="new_car_model">새 차종:</label>
+                                <input type="text" id="new_car_model" name="new_car_model" required>
+                                <button type="submit" name="update_car_info">수정</button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p>차량 정보가 없습니다.</p>
+                <?php endif; ?>
             </div>
 
             <!-- 회원 정보 수정 폼 -->
             <div id="updateUser" class="profile-section">
                 <h3>회원 정보 수정</h3>
                 <form action="update_user_info.php" method="POST">
+                    <p><strong>기존 사용자명:</strong> <?= htmlspecialchars($username) ?></p>
                     <label for="new_username">새 사용자명:</label>
                     <input type="text" id="new_username" name="new_username" required>
+                    <p><strong>기존 이메일:</strong> <?= htmlspecialchars($user_email) ?></p>
                     <label for="new_email">새 이메일:</label>
                     <input type="email" id="new_email" name="new_email" required>
                     <label for="new_password">새 비밀번호:</label>
                     <input type="password" id="new_password" name="new_password" required>
                     <button type="submit" name="update_user_info">수정</button>
-                    <?php if (isset($user_update_success)): ?>
-                        <p class="success">회원 정보가 성공적으로 수정되었습니다.</p>
-                    <?php endif; ?>
                 </form>
             </div>
         </div>

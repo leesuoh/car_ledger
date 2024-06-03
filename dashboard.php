@@ -10,34 +10,25 @@ if (!isset($_SESSION['username'])) {
 // 수리 내역을 저장하는 함수
 function saveRepair($conn, $car_number, $description, $cost, $repair_date) {
     $stmt = $conn->prepare("INSERT INTO repairs (car_number, description, cost, datetime) VALUES (?, ?, ?, ?)");
-    if ($stmt === false) {
-        die('prepare() failed: ' . htmlspecialchars($conn->error));
-    }
     $stmt->bind_param("ssis", $car_number, $description, $cost, $repair_date);
-    if ($stmt->execute() === false) {
-        die('execute() failed: ' . htmlspecialchars($stmt->error));
-    }
-    $stmt->close();
+    $stmt->execute();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['finalize_repair'])) {
-        $car_number = $_POST['car_number'];
-        $description = $_POST['description'];
-        $cost = $_POST['cost'];
-        $repair_date = $_POST['repair_date'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalize_repair'])) {
+    $car_number = $_POST['car_number'];
+    $repairs = json_decode($_POST['repairs'], true);
+    $total_cost = 0;
 
-        // 날짜 형식 유효성 검사
-        if (DateTime::createFromFormat('Y-m-d', $repair_date) === false) {
-            echo "<script>alert('유효한 날짜 형식을 입력하세요.'); window.history.back();</script>";
-            exit();
-        }
-
-        saveRepair($conn, $car_number, $description, $cost, $repair_date);
-
-        echo "<script>alert('최종 저장되었습니다.'); window.location.href = 'dashboard.php?car_number=" . $car_number . "';</script>";
-        exit();
+    foreach ($repairs as $repair) {
+        saveRepair($conn, $car_number, $repair['description'], $repair['cost'], $repair['date']);
+        $total_cost += $repair['cost'];
     }
+
+    echo "<script>
+            alert('저장되었습니다.');
+            window.location.href = 'index.php';
+          </script>";
+    exit();
 }
 
 // 금액 형식 변환 함수
@@ -47,64 +38,214 @@ function formatCurrency($amount) {
 ?>
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    document.body.classList.add('fade-in');
-
-    // 페이지를 떠날 때 페이드 아웃 효과 적용
-    document.querySelectorAll('a').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            if (link.getAttribute('href') !== '#') {
-                e.preventDefault();
-                document.body.classList.add('fade-out');
-                setTimeout(function() {
-                    window.location.href = link.href;
-                }, 3000); // 애니메이션 지속 시간 (3초)에 맞춰 조정
-            }
-        });
-    });
-});
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>차계부 대시보드</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let repairs = [];
+
+            $("#addRepair").click(function() {
+                const description = $("#description").val();
+                const cost = parseInt($("#cost").val());
+                const date = $("#repair_date").val();
+
+                if (description && cost && date) {
+                    const index = repairs.length;
+                    repairs.push({ description, cost, date });
+                    $("#repair_list").append(
+                        `<tr id="repair_${index}">
+                            <td>${date}</td>
+                            <td>${description}</td>
+                            <td>${cost.toLocaleString()}원</td>
+                            <td><button class="delete-repair" data-index="${index}">삭제</button></td>
+                        </tr>`
+                    );
+
+                    $("#description").val('');
+                    $("#cost").val('');
+                    $("#repair_date").val('');
+                } else {
+                    alert("모든 필드를 입력해주세요.");
+                }
+            });
+
+            $(document).on('click', '.delete-repair', function() {
+                const index = $(this).data('index');
+                repairs.splice(index, 1);
+                $(`#repair_${index}`).remove();
+            });
+
+            $("#finalizeRepair").click(function() {
+                const carNumber = $("#car_number_hidden").val();
+                
+                const totalCost = repairs.reduce((sum, repair) => sum + repair.cost, 0);
+                const confirmMessage = `${repairs.map(repair => `${repair.cost.toLocaleString()}원`).join('과 ')}이 추가된 ${totalCost.toLocaleString()}원이 총 금액 맞습니까?`;
+
+                if (confirm(confirmMessage)) {
+                    $.post("dashboard.php", {
+                        finalize_repair: true,
+                        car_number: carNumber,
+                        repairs: JSON.stringify(repairs)
+                    }, function(response) {
+                        alert('저장되었습니다.');
+                        window.location.href = 'index.php';
+                    });
+                }
+            });
+
+            function updateRepairList(carNumber) {
+                $.get("get_repairs.php", { car_number: carNumber }, function(data) {
+                    const repairs = JSON.parse(data);
+                    $("#repair_list").empty();
+                    repairs.forEach(repair => {
+                        $("#repair_list").append(
+                            `<tr>
+                                <td>${repair.datetime}</td>
+                                <td>${repair.description}</td>
+                                <td>${repair.cost.toLocaleString()}원</td>
+                            </tr>`
+                        );
+                    });
+                });
+            }
+
+            const carNumber = $("#car_number").val();
+            if (carNumber) {
+                updateRepairList(carNumber);
+            }
+        });
+    </script>
     <style>
-        .form-group {
-            margin-bottom: 15px;
+        body {
+            background-color: #f4f4f9;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
+        header {
+            background-color: #000;
+            color: #fff;
+            padding: 10px 0;
         }
 
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
         }
 
-        .form-group textarea {
-            resize: vertical;
+        .logo {
+            float: left;
+            width: 150px;
         }
 
-        .submit-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
+        .navigation {
+            float: right;
+        }
+
+        .navigation .menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navigation .menu .menu__item {
+            display: inline;
+            margin-left: 15px;
+        }
+
+        .navigation .menu .menu__link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.2em;
+        }
+
+        main {
+            padding: 50px 0;
+            background: #fff;
             text-align: center;
         }
 
-        .submit-btn:hover {
-            background-color: #0056b3;
+        .dashboard-container {
+            max-width: 800px;
+            margin: auto;
+            background: #f9f9f9;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .dashboard-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .dashboard-container form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-container label {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-container input[type="text"],
+        .dashboard-container input[type="date"],
+        .dashboard-container input[type="number"],
+        .dashboard-container textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .dashboard-container .submit-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: #000;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .dashboard-container .submit-btn:hover {
+            background-color: #333;
+        }
+
+        .small-input {
+            width: 100px;
+        }
+
+        .large-textarea {
+            width: 300px;
+            height: 100px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        table th {
+            background-color: #f4f4f9;
+            text-align: left;
         }
     </style>
 </head>
@@ -127,14 +268,14 @@ document.addEventListener("DOMContentLoaded", function() {
     <main>
         <div class="dashboard-container">
             <h2>차계부 대시보드</h2>
-            <form action="dashboard.php" method="POST">
+            <form action="dashboard.php" method="GET">
                 <label for="car_number">차번호 입력:</label>
                 <input type="text" id="car_number" name="car_number" required>
                 <button type="submit" class="submit-btn">조회</button>
             </form>
             
             <?php
-            $car_number = $_POST['car_number'] ?? $_GET['car_number'] ?? null;
+            $car_number = $_GET['car_number'] ?? null;
             if ($car_number) {
                 // 차량 정보 조회
                 $stmt = $conn->prepare("SELECT * FROM car_info WHERE car_number = ?");
@@ -161,7 +302,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     if ($repair_result->num_rows > 0) {
                         echo "<table><tr><th>날짜</th><th>수리 내역</th><th>수리 가격</th></tr>";
                         while ($repair = $repair_result->fetch_assoc()) {
-                            echo "<tr><td>" . htmlspecialchars($repair['datetime']) . "</td><td>" . htmlspecialchars($repair['description']) . "</td><td>" . formatCurrency(htmlspecialchars($repair['cost'])) . "</td></tr>";
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($repair['datetime']) . "</td>
+                                    <td>" . htmlspecialchars($repair['description']) . "</td>
+                                    <td>" . formatCurrency(htmlspecialchars($repair['cost'])) . "</td>
+                                  </tr>";
                         }
                         echo "</table>";
                     } else {
@@ -170,22 +315,23 @@ document.addEventListener("DOMContentLoaded", function() {
                     ?>
 
                     <h3>수리 내역 입력</h3>
-                    <form method="POST">
-                        <input type="hidden" name="car_number" id="car_number" value="<?= htmlspecialchars($car_number) ?>">
-                        <div class="form-group">
-                            <label for="repair_date">수리 날짜:</label>
-                            <input type="date" id="repair_date" name="repair_date" class="small-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="description">수리 내역:</label>
-                            <textarea id="description" name="description" class="large-textarea" placeholder="수리 내역을 입력하세요" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="cost">수리 비용:</label>
-                            <input type="number" id="cost" name="cost" class="small-input" required>
-                        </div>
-                        <button type="submit" name="finalize_repair" class="submit-btn">최종 수리 내역 저장</button>
+                    <form id="repairForm" method="POST">
+                        <input type="hidden" name="car_number_hidden" id="car_number_hidden" value="<?= htmlspecialchars($car_number) ?>">
+                        <label for="repair_date">수리 날짜:</label>
+                        <input type="date" id="repair_date" name="repair_date" class="small-input" required><br><br>
+                        <label for="description">수리 내역:</label>
+                        <textarea id="description" name="description" class="large-textarea" placeholder="수리 내역을 입력하세요" required></textarea>
+                        <label for="cost">수리 비용:</label>
+                        <input type="number" id="cost" name="cost" class="small-input" required>
+                        <br><br>
+                        <button type="button" id="addRepair" class="submit-btn">수리 내역 추가</button>
                     </form>
+                    
+                    <h3>입력된 수리 내역</h3>
+                    <table id="repair_list">
+                        <tr><th>날짜</th><th>수리 내역</th><th>수리 가격</th><th>삭제</th></tr>
+                    </table><br>
+                    <button type="button" id="finalizeRepair" class="submit-btn">최종 수리 내역 저장</button>
                     <?php
                 } else {
                     echo "<p>차량 정보를 찾을 수 없습니다.</p>";
