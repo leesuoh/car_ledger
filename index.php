@@ -10,6 +10,23 @@ session_start();
     <title>차량 관리 시스템</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* 주요 기능 박스 애니메이션 */
+        .slide-in-left {
+            animation: slideInLeft 2.5s ease-out forwards;
+        }
+
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 기타 스타일 */
         body {
             background-color: #f4f4f9;
             font-family: Arial, sans-serif;
@@ -31,7 +48,7 @@ session_start();
 
         .logo {
             float: left;
-            width: 195px; /* 30% 증가된 크기 */
+            width: 195px;
         }
 
         .navigation {
@@ -52,7 +69,7 @@ session_start();
         .navigation .menu .menu__link {
             color: #fff;
             text-decoration: none;
-            font-size: 1.3em; /* 30% 증가된 크기 */
+            font-size: 1.3em;
         }
 
         .hero {
@@ -71,6 +88,9 @@ session_start();
             padding: 20px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 10px;
+            opacity: 0;
+            transform: translateX(-100%);
+            transition: opacity 2.5s ease-out, transform 2.5s ease-out;
         }
 
         .start-btn {
@@ -100,18 +120,15 @@ session_start();
             margin-bottom: 40px;
         }
 
-        .feature {
-            display: inline-block;
-            width: 45%;
-            margin: 2.5%;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .feature i {
-            font-size: 3em;
-            margin-bottom: 20px;
-            color: #007bff;
+        .feature-box {
+            padding: 20px;
+            margin: 20px 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            opacity: 0;
+            transform: translateX(-100%);
+            transition: opacity 2.5s ease-out, transform 2.5s ease-out;
         }
 
         footer {
@@ -175,23 +192,19 @@ session_start();
     <section class="features">
         <div class="container">
             <h2>주요 기능</h2>
-            <div class="feature">
-                <i class="fas fa-car"></i>
+            <div class="feature-box">
                 <h3>차량 정보 관리</h3>
                 <p>차량 등록, 차종, 주행거리 등의 정보를 체계적으로 관리합니다. 모든 차량 정보를 한 눈에 확인하고, 필요한 경우 쉽게 업데이트할 수 있습니다.</p>
             </div>
-            <div class="feature">
-                <i class="fas fa-wrench"></i>
+            <div class="feature-box">
                 <h3>수리 내역 기록</h3>
                 <p>차량의 수리 내역과 비용을 정확하게 기록하고 관리합니다. 수리 이력을 통해 차량 상태를 지속적으로 파악하고, 향후 수리 및 유지 보수 계획을 세울 수 있습니다.</p>
             </div>
-            <div class="feature">
-                <i class="fas fa-gas-pump"></i>
+            <div class="feature-box">
                 <h3>연료 사용 기록</h3>
                 <p>연료 사용 내역을 기록하여 연비를 계산하고, 연료비를 절감할 수 있는 방법을 모색합니다. 주유 기록을 통해 연비 향상 및 경제적인 운전을 도와줍니다.</p>
             </div>
-            <div class="feature">
-                <i class="fas fa-calendar-alt"></i>
+            <div class="feature-box">
                 <h3>정기 점검 알림</h3>
                 <p>정기적인 차량 점검 일정을 관리하고, 점검 시기를 놓치지 않도록 알림 기능을 제공합니다. 차량의 최적 상태 유지를 위해 필요한 모든 정보를 제공합니다.</p>
             </div>
@@ -205,13 +218,38 @@ session_start();
     </div>
 </footer>
 
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    
 $(document).ready(function(){
+    // Hero 텍스트 박스 애니메이션
     setTimeout(function(){
-        $(".car-animation").addClass("animate-car");
+        $(".hero .text-box").css('opacity', '1').css('transform', 'translateX(0)');
     }, 500);
+
+    // 기능 박스 스크롤 애니메이션
+    $(window).on('scroll', function() {
+        $('.feature-box').each(function() {
+            var boxTop = $(this).offset().top;
+            var windowBottom = $(window).scrollTop() + $(window).height();
+            if (boxTop < windowBottom) {
+                $(this).css('opacity', '1').css('transform', 'translateX(0)');
+            }
+        });
+    });
+
+    // 기능 박스 호버 효과
+    $('.feature-box').hover(function() {
+        $(this).css({
+            'box-shadow': '1px 1px #53a7ea, 2px 2px #53a7ea, 3px 3px #53a7ea',
+            'transform': 'translateX(-3px)'
+        });
+    }, function() {
+        $(this).css({
+            'box-shadow': 'none',
+            'transform': 'translateX(0)'
+        });
+    });
 });
 </script>
 </body>

@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS car_info (
     mileage INT NOT NULL,
     FOREIGN KEY (username) REFERENCES users(username)
 );
-ALTER TABLE car_info ADD INDEX (car_number);
+ALTER TABLE car_info ADD INDEX (car_number); -- 이 인덱스는 데이터베이스가 car_number 열에서 데이터를 더 빠르게 검색하고 조회할 수 있도록 도와준다.
 
--- repairs 테이블 생성
+
 -- repairs 테이블 생성
 CREATE TABLE IF NOT EXISTS repairs (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,3 +38,10 @@ CREATE TABLE IF NOT EXISTS repairs (
 SELECT * FROM users;
 SELECT * FROM car_info;
 SELECT * FROM repairs;
+
+DELETE FROM users;
+DELETE FROM car_info;
+DELETE FROM repairs;
+
+
+

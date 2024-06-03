@@ -1,3 +1,20 @@
+/* 슬라이드 애니메이션 클래스 */
+.slide-in-left {
+  animation: slideInLeft 2.5s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 기존 스타일 유지 */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f9;
@@ -137,3 +154,50 @@ main {
   50% { transform: translateX(20px); }
   100% { transform: translateX(0); }
 }
+
+/* 새로운 기능 박스 스타일 */
+.feature-box {
+  padding: 20px;
+  margin: 20px 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+/* 기능 박스 호버 스타일 */
+.feature-box:hover {
+  box-shadow: 1px 1px #53a7ea, 2px 2px #53a7ea, 3px 3px #53a7ea;
+  transform: translateX(-3px);
+  transition: all 0.2s ease-in-out;
+}
+
+/* 페이지 전환 페이드 아웃 애니메이션 */
+.fade-out {
+    animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* 페이지 전환 페이드 인 애니메이션 */
+.fade-in {
+    animation: fadeIn 3s forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+

@@ -29,6 +29,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.body.classList.add('fade-in');
+
+    // 페이지를 떠날 때 페이드 아웃 효과 적용
+    document.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            if (link.getAttribute('href') !== '#') {
+                e.preventDefault();
+                document.body.classList.add('fade-out');
+                setTimeout(function() {
+                    window.location.href = link.href;
+                }, 3000); // 애니메이션 지속 시간 (0.5초)에 맞춰 조정
+            }
+        });
+    });
+});
+</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>로그인</title>
@@ -128,7 +147,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
         <div class="link">
             <p>계정이 없으신가요? <a href="register.php">회원가입</a></p>
-            <p><a href="find_username.php">아이디 찾기</a> | <a href="reset_password.php">비밀번호 찾기</a></p>
         </div>
     </div>
 </body>
