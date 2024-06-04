@@ -7,6 +7,8 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 
+$username = $_SESSION['username'];
+
 // 수리 내역을 저장하는 함수
 function saveRepair($conn, $car_number, $description, $cost, $repair_date) {
     $stmt = $conn->prepare("INSERT INTO repairs (car_number, description, cost, datetime) VALUES (?, ?, ?, ?)");
@@ -15,7 +17,7 @@ function saveRepair($conn, $car_number, $description, $cost, $repair_date) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalize_repair'])) {
-    $car_number = $_POST['car_number'];
+    $car_number = $_POST['car_number_hidden'];
     $repairs = json_decode($_POST['repairs'], true);
     $total_cost = 0;
 
@@ -82,18 +84,26 @@ function formatCurrency($amount) {
 
             $("#finalizeRepair").click(function() {
                 const carNumber = $("#car_number_hidden").val();
-                
+
                 const totalCost = repairs.reduce((sum, repair) => sum + repair.cost, 0);
                 const confirmMessage = `${repairs.map(repair => `${repair.cost.toLocaleString()}원`).join('과 ')}이 추가된 ${totalCost.toLocaleString()}원이 총 금액 맞습니까?`;
 
                 if (confirm(confirmMessage)) {
-                    $.post("dashboard.php", {
-                        finalize_repair: true,
-                        car_number: carNumber,
-                        repairs: JSON.stringify(repairs)
-                    }, function(response) {
-                        alert('저장되었습니다.');
-                        window.location.href = 'index.php';
+                    $.ajax({
+                        url: "dashboard.php",
+                        type: "POST",
+                        data: {
+                            finalize_repair: true,
+                            car_number_hidden: carNumber,
+                            repairs: JSON.stringify(repairs)
+                        },
+                        success: function(response) {
+                            alert('저장되었습니다.');
+                            window.location.href = 'index.php';
+                        },
+                        error: function() {
+                            alert('저장 중 오류가 발생했습니다.');
+                        }
                     });
                 }
             });
@@ -278,8 +288,8 @@ function formatCurrency($amount) {
             $car_number = $_GET['car_number'] ?? null;
             if ($car_number) {
                 // 차량 정보 조회
-                $stmt = $conn->prepare("SELECT * FROM car_info WHERE car_number = ?");
-                $stmt->bind_param("s", $car_number);
+                $stmt = $conn->prepare("SELECT * FROM car_info WHERE car_number = ? AND username = ?");
+                $stmt->bind_param("ss", $car_number, $username);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 
@@ -334,7 +344,7 @@ function formatCurrency($amount) {
                     <button type="button" id="finalizeRepair" class="submit-btn">최종 수리 내역 저장</button>
                     <?php
                 } else {
-                    echo "<p>차량 정보를 찾을 수 없습니다.</p>";
+                    echo "<p>올바르지 않은 차량 번호입니다.</p>";
                 }
             }
             ?>

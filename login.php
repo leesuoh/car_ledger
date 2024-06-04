@@ -7,21 +7,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows == 1) {
-        $user = $result->fetch_assoc();
-        if (password_verify($password, $user['password'])) {
-            $_SESSION['username'] = $username;
-            header("Location: index.php"); // 로그인 후 홈 페이지로 이동
-        } else {
-            $error = "사용자명 또는 비밀번호가 잘못되었습니다.";
-        }
+    if (empty($username) || empty($password)) {
+        $error = "모든 필드를 입력해주세요.";
     } else {
-        $error = "사용자명 또는 비밀번호가 잘못되었습니다.";
+        $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows == 1) {
+            $user = $result->fetch_assoc();
+            if (password_verify($password, $user['password'])) {
+                $_SESSION['username'] = $username;
+                header("Location: index.php"); // 로그인 후 홈 페이지로 이동
+                exit();
+            } else {
+                $error = "비밀번호가 올바르지 않습니다.";
+            }
+        } else {
+            $error = "존재하지 않는 사용자입니다.";
+        }
+
+        $stmt->close();
+        $conn->close();
     }
 }
 ?>
